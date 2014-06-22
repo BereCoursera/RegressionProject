@@ -1,10 +1,10 @@
-Relationship between Miles Per Gallon and Transmissions 
+Relationship between Miles-Per-Gallon and Transmissions 
 ========================================================
 
 This project investigates the relationship between Miles Per Gallon(MPG) and Type of Transmission. The mtcars dataset was used from 1974 Motor Trend US magazine. The aims of this project were as follows:
 
-1. Find out if automatic or manual transmission better for MPG
-2. Quantify how different MPG is between automatic and manual transmissions
+1. Find out if automatic or manual transmission better for MPG.
+2. Quantify how different MPG is between automatic and manual transmissions.
 
 ```{r setup, cache = F, echo = F, message = F, warning = F, tidy = F, results='hide'}
 library(car)
@@ -35,7 +35,11 @@ mod2.3 <- lm(mpg ~ transmission:wt + transmission:qsec + transmission:hp + trans
 anova(mod2.0, mod2.2, mod2.3)#sig
 anova(mod2.1, mod2.2, mod2.3)
 ```
+#### Summary
+To answer the questions, regression analysis was conducted. The result showed that auto-transmission cars were efficent with regards to millages for gallons of fuel compared to cars with manual-transmission; assuming normality and controlling for speed, wieght and horsepower. 
+
 --------------------------------------------------------
+
 #### Preprocessing
 The variables **number of cylinders (cyl)**, **number of forward gears (gear)** and **number of carburetors (carb)**  were changed to ordinal scales while **V/straight engine (vs)** and **transmission type (am)** were casted to dummy variables.
 
