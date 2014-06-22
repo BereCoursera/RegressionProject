@@ -1,0 +1,106 @@
+Relationship between Miles Per Gallon and Transmissions 
+========================================================
+
+This project investigates the relationship between Miles Per Gallon(MPG) and Type of Transmission. The mtcars dataset was used from 1974 Motor Trend US magazine. The aims of this project were as follows:
+
+1. Find out if automatic or manual transmission better for MPG
+2. Quantify how different MPG is between automatic and manual transmissions
+
+```{r setup, cache = F, echo = F, message = F, warning = F, tidy = F, results='hide'}
+library(car)
+#pairs(myMtCars, panel = panel.smooth, main = "Car data", col = myMtCars$transmission)
+myMtCars = data.frame(mtcars)
+#myMtCars <- myMtCars[myMtCars$cyl != 8,] # NA
+myMtCars$cyl <- ordered(myMtCars$cyl)
+myMtCars$gear <- ordered(myMtCars$gear, labels=c("3","4","5"))
+myMtCars$carb <- ordered(myMtCars$carb, labels=c("1","2","4","3","6","8"))
+myMtCars$vs <- factor(myMtCars$vs, labels=c("V","Straight"))
+myMtCars$transmission <- factor(mtcars$am, labels=c("Manual","Autotomatic"))
+myMtCars <- myMtCars[, names(myMtCars) != "am"] # drop am variable
+
+cf<-summary(lm(mpg ~ transmission, data = myMtCars))$coef   
+allvarlm <- summary(lm(mpg ~., data=myMtCars))
+wtCorr <- abs(round(cor(myMtCars$mpg,myMtCars$wt),2)*100)
+ttest <- t.test(myMtCars[myMtCars$transmission == "Manual",]$mpg,myMtCars[myMtCars$transmission != "Manual",]$mpg)
+#plot(myMtCars$mpg,pch=19,xlab = "Car Index", ylab = "Miles per Hour")
+#points(myMtCars$mpg,pch=19,col=((myMtCars$transmission=="Manual")*1+1))
+mod1 <- lm(mpg ~ transmission*., data=myMtCars) # all
+mod2 <- lm(mpg ~ transmission:disp + transmission:hp + transmission:drat + transmission:wt + transmission:qsec,data=myMtCars) # remove NA
+mod2.0 <- lm(mpg ~ transmission:wt + transmission:hp,data=myMtCars)
+#mod3 <- lm(mpg ~ transmission:cyl + transmission:disp + transmission:hp + transmission:drat + transmission:wt + transmission:qsec,data=myMtCars)
+mod2.1 <- lm(mpg ~ transmission:wt + transmission:qsec,data=myMtCars)
+mod2.2 <- lm(mpg ~ transmission:wt + transmission:qsec + transmission:hp,data=myMtCars)
+mod2.3 <- lm(mpg ~ transmission:wt + transmission:qsec + transmission:hp + transmission:disp,data=myMtCars)
+#mod2.4 <- lm(mpg ~ transmission:cyl + transmission:disp + transmission:hp + transmission:drat + transmission:wt + transmission:qsec,data=myMtCars)
+anova(mod2.0, mod2.2, mod2.3)#sig
+anova(mod2.1, mod2.2, mod2.3)
+```
+--------------------------------------------------------
+#### Preprocessing
+The variables **number of cylinders (cyl)**, **number of forward gears (gear)** and **number of carburetors (carb)**  were changed to ordinal scales while **V/straight engine (vs)** and **transmission type (am)** were casted to dummy variables.
+
+#### Exploratory Analysis
+As shown on the boxplot (see Figure 1), manual transmission has a lower effect on mpg than autmatic transmission and the variiances are not constant as well; showing an estimated percent increase in mpg of `r round(cf[2],2)` comparing automatic to manual transmission. A t-test confirms that the effects are different. The most fuel efficent cars were all light weighted with four-cylinder engines. Weight explaied fuel consumption better (with a correlation of `r wtCorr`%) than the other variables. But the other variables seem to also be involved. 
+
+#### Model Selection
+Since efficency on mpg could be influsenced by the other variables, linear models with the variables were fitted. All bivariate linear models were significant with respect to mpg. However, constructing a model with all regressors made all of the variables to be not sigificant (except for horsepower and weight (p-value ~ 0.1)). The R^2 was **`r round(allvarlm$r.squared,2)`**, implying this model explained **`r round(allvarlm$r.squared,4)*100`** of the variance. This suggested some factors were correlated and thus the need to control for interactions. 
+
+Since the objective was to test the effect of trasmission type on mpg, only the interaction between transmission type and the other variables was considered. A model with all variables was made. The summary of this model showed that the engine type (vs), the number of cylinders variable, gear variable as well as the number of carburetors were redundant with cofficient values of NA. 
+
+A model with just the ineraction between transmission type controling for interaction between weight and horsepower was evaluated since these two were significant on the first model (from above). The weight and speed of a car also seem to be important variables so a model with just these variable was constructed. In addition, a nested model search was done by adding the other covariates resulting in a total of 4 models. The ANOVA function created series of likelihood ratio with p-values that were not significant except for one; the model with covariates of weight, horse power and speed. The residuals the normal qqplot show the normality of the residuals.
+
+#### Results
+As can be seen below in the summary of the model, the main interacting variables are weight and speed (amount of time for 1/4 mile). The weight has a negative effect while speed follows the direction of mpg. Keeping speed constant,  the number of miles per galon will decrease by 7.9344 for cars with auto-transmission compared to 2.23 for manual-transmission. For each second,  an auto-transmission car takes it 1.36 less mile to run ¼ mile compared to 0.59 for manual-transmission cars. The heavir a car is, the more force it needs and the more gas it will use.
+
+#### Conclusion
+There is evidence supporting the claim that auto-transmission cars have better millage than the alternative after controlling for speed (acceleration), weight and horsepower.
+
+```{r}
+summary(mod2.2)
+```
+
+#### Appendex.
+##### Codes and Figures.
+Exploratory anaylsis.
+```{r message = F, warning = F, tidy = F, results='hide'}
+#pairs(myMtCars, panel = panel.smooth, main = "Car data", col = myMtCars$transmission)
+myMtCars = data.frame(mtcars)
+myMtCars$cyl <- ordered(myMtCars$cyl)
+myMtCars$gear <- ordered(myMtCars$gear, labels=c("3","4","5"))
+myMtCars$carb <- ordered(myMtCars$carb, labels=c("1","2","4","3","6","8"))
+myMtCars$vs <- factor(myMtCars$vs, labels=c("V","Straight"))
+myMtCars$transmission <- factor(mtcars$am, labels=c("Manual","Autotomatic"))
+myMtCars <- myMtCars[, names(myMtCars) != "am"] # drop am variable
+```
+```{r, fig.height=4.5, fig.width=4.5, echo = F}
+boxplot(mpg ~ transmission, data = myMtCars,
+        xlab = "Type of Transmission", ylab = "Miles per Hour",
+        main = "Figure 1. MPG vs Manual/Auto Transmission", varwidth = TRUE, col = "lightgray")
+
+plot(myMtCars$mpg,pch=19,xlab = "Car Index", ylab = "Miles per Hour",main = "Figure 2. MPG vs Manual/Auto Transmission")
+points(myMtCars$mpg,pch=19,col=myMtCars$transmission)
+legend("topleft", "(x,y)",unique(myMtCars$transmission),pch=19,col=unique(myMtCars$transmission))
+```
+
+```{r}
+wtCorr <- abs(round(cor(myMtCars$mpg,myMtCars$wt),2)*100)
+t.test(myMtCars[myMtCars$transmission == "Manual",]$mpg,myMtCars[myMtCars$transmission != "Manual",]$mpg)
+```
+Model Selection
+
+```{r}
+mod1 <- lm(mpg ~ transmission*., data=myMtCars) # all
+mod2 <- lm(mpg ~ transmission:disp + transmission:hp + transmission:drat + transmission:wt + transmission:qsec,data=myMtCars) # remove NA
+mod2.0 <- lm(mpg ~ transmission:wt + transmission:hp,data=myMtCars)
+mod2.1 <- lm(mpg ~ transmission:wt + transmission:qsec,data=myMtCars)
+mod2.2 <- lm(mpg ~ transmission:wt + transmission:qsec + transmission:hp,data=myMtCars)
+mod2.3 <- lm(mpg ~ transmission:wt + transmission:qsec + transmission:hp + transmission:disp,data=myMtCars)
+anova(mod2.0, mod2.2, mod2.3)#sig
+anova(mod2.1, mod2.2, mod2.3)
+```
+Diagnostics
+```{r}
+qqPlot(mod2.2, main="QQ Plot")
+cutoff <- 4/((nrow(myMtCars)-length(mod2.2$coefficients)-2)) 
+plot(mod2.2, which=4, cook.levels=cutoff)
+```
